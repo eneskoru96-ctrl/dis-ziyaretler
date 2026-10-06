@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
 <title>Türkiye'nin Diplomatik Ziyaret Haritası</title>
 <meta name="description" content="Türk liderlerinin 1925–2025 arasında yaptığı dış ziyaretlerin ülkelere göre dağılımı.">
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -18,15 +19,8 @@
   --display:"Source Serif 4", Georgia, "Times New Roman", serif;
   --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#171a1f; --panel:#20242b; --fg:#e8eaee; --muted:#9aa2ae; --line:#343a43;
-  --nodata:#2c3038; --border:#171a1f; --tr:#e2705f; --accent:#6da7ec;
-  --s1:#184f95; --s2:#256abf; --s3:#3987e5; --s4:#6da7ec; --s5:#9ec5f4; --s6:#cde2fb; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#171a1f; --panel:#20242b; --fg:#e8eaee; --muted:#9aa2ae; --line:#343a43;
-  --nodata:#2c3038; --border:#171a1f; --tr:#e2705f; --accent:#6da7ec;
-  --s1:#184f95; --s2:#256abf; --s3:#3987e5; --s4:#6da7ec; --s5:#9ec5f4; --s6:#cde2fb; color-scheme:dark}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 40px;display:grid;gap:18px}
 header{display:grid;gap:6px}
