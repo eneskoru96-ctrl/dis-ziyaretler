@@ -68,7 +68,7 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,3.4vw,36px);l
 .rg .lead{font-size:13px;color:var(--muted);margin:4px 0 8px}
 .rg .lead b{color:var(--fg);font-weight:600}
 .rg ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}
-.rg li{display:grid;grid-template-columns:minmax(0,11.5em) minmax(0,1fr) 6.5em;gap:8px;align-items:center;font-size:13px}
+.rg li{display:grid;grid-template-columns:minmax(0,13em) minmax(0,1fr) 6.5em;gap:8px;align-items:center;font-size:13px}
 .rg li .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rg li .tr2{height:10px;background:var(--panel);border-radius:0 3px 3px 0;overflow:hidden}
 .rg li .tr2 i{display:block;height:100%;border-radius:0 3px 3px 0}
@@ -293,7 +293,7 @@ function drawTL(){
 }
 
 const REG=[['Avrupa','#003399'],['Balkanlar','#4F8FDB'],['Orta Doğu ve Kuzey Afrika','#008A3E'],['Güney Kafkasya','#8E3B5E'],['Orta Asya','#17A2A0'],['Güney Asya','#E8743B'],['Asya-Pasifik','#C9739B'],['Sahraaltı Afrika','#F2B90F'],['Kuzey Amerika','#B22234'],['Latin Amerika ve Karayipler','#9852D9'],['KKTC','#9E9E9E']];
-const SHORT={'Orta Doğu ve Kuzey Afrika':'ODKA','Latin Amerika ve Karayipler':'Latin Amerika'};
+const SHORT={'Orta Doğu ve Kuzey Afrika':'Ortadoğu ve K. Afrika','Latin Amerika ve Karayipler':'Latin Amerika'};
 function drawRegions(subj,pl,W_){
   const cnt=Object.fromEntries(REG.map(([n])=>[n,0]));let tot=0;
   for(const [c,v] of Object.entries(CUR)){const b=(D.meta[c]||{}).bolge;if(b in cnt){cnt[b]+=v[mode];tot+=v[mode];}}
@@ -306,7 +306,7 @@ function drawRegions(subj,pl,W_){
   document.getElementById('rg').innerHTML=`<h2>Bölgelere göre dağılım, ${pl}</h2><p class="lead">${lead}</p>`+
    `<ul>${rows.map(([n,col,v])=>`<li class="${v?'':'z'}"><span class="nm" title="${n}">${SHORT[n]||n}</span><span class="tr2"><i style="width:${(v/mx*100).toFixed(1)}%;background:${col}"></i></span><span class="v"><b>${v}</b> · %${f(pc(v))}</span></li>`).join('')}</ul>`;
 }
-const LOC={'Avrupa':"Avrupa'da",'Balkanlar':"Balkanlar'da",'Orta Doğu ve Kuzey Afrika':"ODKA'da",'Güney Kafkasya':"Güney Kafkasya'da",'Orta Asya':"Orta Asya'da",'Güney Asya':"Güney Asya'da",'Asya-Pasifik':"Asya-Pasifik'te",'Sahraaltı Afrika':"Sahraaltı Afrika'da",'Kuzey Amerika':"Kuzey Amerika'da",'Latin Amerika ve Karayipler':"Latin Amerika'da",'KKTC':"KKTC'de"};
+const LOC={'Avrupa':"Avrupa'da",'Balkanlar':"Balkanlar'da",'Orta Doğu ve Kuzey Afrika':"Ortadoğu ve K. Afrika'da",'Güney Kafkasya':"Güney Kafkasya'da",'Orta Asya':"Orta Asya'da",'Güney Asya':"Güney Asya'da",'Asya-Pasifik':"Asya-Pasifik'te",'Sahraaltı Afrika':"Sahraaltı Afrika'da",'Kuzey Amerika':"Kuzey Amerika'da",'Latin Amerika ve Karayipler':"Latin Amerika'da",'KKTC':"KKTC'de"};
 function rng(a,b){return a===b?''+a:a+'–'+b}
 function update(){
   const act=new Set(filt().map(r=>r[0]));
