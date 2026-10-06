@@ -45,9 +45,10 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,3.4vw,36px);l
 .tip b{display:block;font-weight:600;margin-bottom:2px}
 .tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
 .tip .r em{font-style:normal;color:var(--fg);font-family:var(--mono);font-variant-numeric:tabular-nums}
-.below{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px;align-items:start}
-@media (max-width:760px){.below{grid-template-columns:1fr}}
-.legend{display:grid;gap:8px}
+.below{display:grid;gap:14px;max-width:640px}
+.legend{display:grid;gap:6px;position:absolute;transform:translateX(-50%);width:min(280px,26%);min-width:210px;background:color-mix(in srgb,var(--bg) 88%,transparent);padding:8px 10px;border-radius:6px}
+.legend .swatches{display:flex;gap:2px}.legend .sw{flex:1 1 0;min-width:0}.legend .sw i{width:100%}
+@media (max-width:700px){.legend{position:static;transform:none;width:auto;min-width:0;margin-top:10px;background:none;padding:0}}
 .legend h2,.top h2{font:600 13px var(--body);margin:0;color:var(--fg)}
 .swatches{display:flex;flex-wrap:wrap;gap:2px}
 .sw{display:grid;gap:3px;font:500 12px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
@@ -82,17 +83,17 @@ footer a{color:inherit}
   <div class="mapbox" id="mapbox">
     <svg id="map" role="img" aria-label="İkili ziyaret sayısına göre dünya haritası"></svg>
     <div class="tip" id="tip" hidden></div>
-  </div>
-  <div class="below">
-    <div class="legend">
+    <div class="legend" id="legend">
       <h2 id="legh">Ziyaret sayısı</h2>
       <div class="swatches" id="sw"></div>
       <div class="keys">
         <span><i style="background:var(--nodata)"></i><span id="nolab">Ziyaret yok</span></span>
         <span><i style="background:var(--tr)"></i>Türkiye</span>
       </div>
-      <div class="stat" id="stat"></div>
     </div>
+  </div>
+  <div class="below">
+    <div class="stat" id="stat"></div>
     <div class="top">
       <h2 id="toph">En çok ziyaret yapılan 10 ülke</h2>
       <table><thead><tr><th></th><th>Ülke</th><th class="n" id="thI">İkili</th><th class="n" id="thT">Tümü</th></tr></thead><tbody id="tb"></tbody></table>
@@ -142,6 +143,7 @@ Promise.resolve(TOPO).then(topo=>{
   fc.features.forEach(f=>{f.iso=f.id?byNum[f.id]:SPECIAL[f.properties.name]; if(f.id==='792') f.isTR=true;});
   const proj=d3.geoEqualEarth().fitExtent([[4,4],[W-4,H-4]],{type:'Sphere'});
   const path=d3.geoPath(proj);
+  { const [lx,ly]=proj([37,-43]); const lg=document.getElementById('legend'); lg.style.left=(lx/W*100)+'%'; lg.style.top=(ly/H*100)+'%'; }
   svg.append('path').attr('class','sphere').attr('d',path({type:'Sphere'}));
   svg.append('g').selectAll('path').data(fc.features).join('path')
     .attr('class',d=>'c'+(d.isTR?' tr':'')).attr('d',path)
