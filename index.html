@@ -67,6 +67,10 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,3.4vw,36px);l
 #map path.c{cursor:pointer}
 .tl{display:grid;gap:4px}
 .tl h2{font:600 13px var(--body);margin:0}
+.tlsel{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:12.5px;color:var(--muted);min-height:20px}
+.tlsel b{color:var(--fg);font-variant-numeric:tabular-nums}
+.tlsel button{font:500 12px var(--body);color:var(--accent);background:none;border:0;cursor:pointer;padding:0}
+#tl{cursor:pointer;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .tl .k{display:flex;gap:14px;font-size:12px;color:var(--muted)}
 .tl .k i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}
 #tl{width:100%;height:auto;display:block;overflow:visible}
@@ -155,6 +159,7 @@ footer .notes li::before{content:"–";position:absolute;left:0}
   </div>
   <div class="tl">
     <h2 id="tlh">Yıllara göre ziyaret sayısı</h2>
+    <div class="tlsel" id="tlsel"></div>
     <svg id="tl" role="img" aria-label="Yıllara göre ziyaret sayısı"></svg>
     <div class="k" id="tlk"></div>
   </div>
@@ -208,22 +213,23 @@ const T={
   hint:"Haritada ya da listede bir ülkeye tıklayın. O ülkeden Türkiye'ye yapılan ziyaretler tarih, lider, şehir, amaç ve kaynağıyla burada listelenir.",cpt:'',
   notes:['Tüm ziyaretler: İptal, transit ve yalnızca özel ziyaretler hariç tüm kayıtları içermektedir. Her kayıt bir ziyareti gösterir.','İkili ziyaret: Amaç alanında Official veya Goodwill geçen kayıtlardır. Aynı kayıtta Multilateral da geçiyorsa ikili kısmında da sayılır.','Gelen veride milli savunma bakanları yer almaz. Kral, emir, veliaht prens, şah, papa gibi unvanlar "Hükümdar ve diğer" altında toplanmıştır.','Türkiye\'de düzenlenen zirveler (ör. 2004 NATO İstanbul, 2015 G20 Antalya) tüm ziyaretlerin sayısını ilgili yıllarda belirgin biçimde artırır.','Tarihi ülkeler bugünkü sınırlara aktarıldı: Yugoslavya ve Sırbistan-Karadağ → Sırbistan, Çekoslovakya → Çekya, Doğu Almanya → Almanya, Güney Yemen → Yemen, SSCB → Rusya.','Bölgeler Dışişleri Bakanlığı sınıflandırmasına göredir. KKTC ayrı gösterilmiştir.']}
 };
-let dir='out', period='Tümü', mode=1, role=-1, leader=-1, country=null;
+let dir='out', period='Tümü', mode=1, role=-1, leader=-1, country=null, yr=null, drag=null;
+const yOf=x=>+x[5].slice(0,4), inY=x=>!yr||(yOf(x)>=yr[0]&&yOf(x)<=yr[1]);
 const S=()=>DATA[dir], TX=()=>T[dir];
 const okq=q=>(role<0||q[1]===role)&&(leader<0||q[4]===leader);
 let CUR={};
-function compute(){CUR={};const pi=PER.indexOf(period),s=S();for(const q of s.Q){if(!okq(q)||(pi>=0&&q[0]!==pi))continue;const c=s.isos[q[3]];const v=CUR[c]||(CUR[c]=[0,0]);v[1]+=q[5];if(q[2])v[0]+=q[5];}}
+function compute(){CUR={};const pi=PER.indexOf(period),s=S();if(yr){for(const x of s.R){if((role>=0&&x[3]!==role)||(leader>=0&&x[2]!==leader)||!inY(x))continue;const c=s.isos[x[1]];const v=CUR[c]||(CUR[c]=[0,0]);v[1]++;if(x[4])v[0]++;}return}for(const q of s.Q){if(!okq(q)||(pi>=0&&q[0]!==pi))continue;const c=s.isos[q[3]];const v=CUR[c]||(CUR[c]=[0,0]);v[1]+=q[5];if(q[2])v[0]+=q[5];}}
 // controls
-document.querySelectorAll('.dseg').forEach(b=>b.onclick=()=>{if(dir===b.dataset.d)return;dir=b.dataset.d;period='Tümü';role=-1;leader=-1;country=null;buildRoles();update()});
+document.querySelectorAll('.dseg').forEach(b=>b.onclick=()=>{if(dir===b.dataset.d)return;dir=b.dataset.d;period='Tümü';yr=null;role=-1;leader=-1;country=null;buildRoles();update()});
 const rctrl=document.getElementById('rctrl');
 function buildRoles(){rctrl.querySelectorAll('.rseg').forEach(b=>b.remove());[[-1,'Hepsi'],...S().roles.map((n,i)=>[i,n])].forEach(([i,l])=>{const b=document.createElement('button');b.className='rseg seg';b.type='button';b.textContent=l;b.dataset.r=i;b.onclick=()=>{role=i;if(leader>=0&&role>=0&&!S().LR[leader][role])leader=-1;update()};rctrl.appendChild(b)});}
 const lsel=document.getElementById('lsel');
-function fillSel(){if(dir!=='out'){lsel.innerHTML='';return}const s=S(),pi=PER.indexOf(period);const ok=new Set(s.Q.filter(q=>(role<0||q[1]===role)&&(pi<0||q[0]===pi)).map(q=>q[4]));if(leader>=0&&!ok.has(leader))leader=-1;lsel.innerHTML='<option value="-1">Tüm liderler</option>'+s.L.map((n,i)=>[n,i]).filter(([,i])=>ok.has(i)).map(([n,i])=>`<option value="${i}">${esc(n)}</option>`).join('');lsel.value=leader}
+function fillSel(){if(dir!=='out'){lsel.innerHTML='';return}const s=S(),pi=PER.indexOf(period);const ok=yr?new Set(s.R.filter(x=>(role<0||x[3]===role)&&inY(x)).map(x=>x[2])):new Set(s.Q.filter(q=>(role<0||q[1]===role)&&(pi<0||q[0]===pi)).map(q=>q[4]));if(yr&&leader>=0)ok.add(leader);if(leader>=0&&!ok.has(leader))leader=-1;lsel.innerHTML='<option value="-1">Tüm liderler</option>'+s.L.map((n,i)=>[n,i]).filter(([,i])=>ok.has(i)).map(([n,i])=>`<option value="${i}">${esc(n)}</option>`).join('');lsel.value=leader}
 lsel.onchange=()=>{leader=+lsel.value;update()};
 const mctrl=document.getElementById('mctrl');
 [[1,'Tümü'],[0,'İkili']].forEach(([m,l])=>{const b=document.createElement('button');b.className='mseg seg';b.type='button';b.id='m-'+m;b.textContent=l;b.dataset.m=m;b.onclick=()=>{mode=m;update()};mctrl.appendChild(b)});
 const ctrl=document.getElementById('ctrl');
-function addBtn(p,label){const b=document.createElement('button');b.className='seg';b.type='button';b.textContent=label;b.dataset.p=p;b.onclick=()=>{period=p;update()};ctrl.appendChild(b)}
+function addBtn(p,label){const b=document.createElement('button');b.className='seg';b.type='button';b.textContent=label;b.dataset.p=p;b.onclick=()=>{period=p;yr=null;update()};ctrl.appendChild(b)}
 PER.forEach(p=>addBtn(p,p));
 const sep=document.createElement('span');sep.className='sep';sep.setAttribute('aria-hidden','true');sep.textContent='|';ctrl.appendChild(sep);
 addBtn('Tümü','Toplam');
@@ -251,10 +257,11 @@ function readHash(){const q=new URLSearchParams(location.hash.slice(1));
   dir=q.get('yon')==='gelen'?'in':'out'; mode=q.get('tur')==='ikili'?0:1; role=ROLE_KEYS[dir].indexOf(q.get('makam'));
   const ln=q.get('lider'); leader=(dir==='out'&&ln)?S().L.indexOf(ln):-1;
   const dp=(q.get('donem')||'').replace('-','–');period=PER.includes(dp)?dp:'Tümü';
+  const ym=(q.get('yil')||'').match(/^(\d{4})(?:-(\d{4}))?$/);yr=null;if(ym){const a=+ym[1],b=+(ym[2]||ym[1]);if(a>=1925&&b<=2025&&a<=b){yr=[a,b];period='Tümü';}}
   const u=(q.get('ulke')||'').toUpperCase();country=S().isos.includes(u)?u:null;}
 function writeHash(){const q=new URLSearchParams();
   if(dir==='in')q.set('yon','gelen'); if(mode===0)q.set('tur','ikili');if(role>=0)q.set('makam',ROLE_KEYS[dir][role]);if(leader>=0)q.set('lider',S().L[leader]);
-  if(period!=='Tümü')q.set('donem',period.replace('–','-'));if(country)q.set('ulke',country);
+  if(period!=='Tümü')q.set('donem',period.replace('–','-'));if(yr)q.set('yil',yr[0]===yr[1]?yr[0]:yr[0]+'-'+yr[1]);if(country)q.set('ulke',country);
   const s=q.toString();history.replaceState(null,'',s?'#'+s:location.pathname+location.search);}
 window.addEventListener('hashchange',()=>{readHash();buildRoles();update()});
 document.getElementById('copy').onclick=async(e)=>{const b=e.currentTarget,u=location.href;
@@ -265,12 +272,12 @@ function srcHtml(s){if(!s)return'';return /^https?:\/\//.test(s)?`<a href="${esc
 function drawPanel(){const el=document.getElementById('cp'),s=S();
   if(!country){el.innerHTML=`<h2>Ziyaret ayrıntıları</h2><p class="hint">${TX().hint}</p>`;return}
   const pi=PER.indexOf(period), ci=s.isos.indexOf(country);
-  const rs=s.R.filter(x=>x[1]===ci&&(role<0||x[3]===role)&&(leader<0||x[2]===leader)&&(pi<0||x[0]===pi)&&(mode===1||x[4])).sort((a,b)=>a[5]<b[5]?-1:1);
+  const rs=s.R.filter(x=>x[1]===ci&&inY(x)&&(role<0||x[3]===role)&&(leader<0||x[2]===leader)&&(pi<0||x[0]===pi)&&(mode===1||x[4])).sort((a,b)=>a[5]<b[5]?-1:1);
   const W_=mode===1?'ziyaret':'ikili ziyaret';
   el.innerHTML=`<h2><span>${esc(trName(country))}, ${rs.length} ${W_}</span><button class="x" type="button" id="cpx">Kapat ✕</button></h2>`+
    (rs.length?`<ol>${rs.map(x=>`<li><div class="a"><span class="d">${fmtD(x[5])}</span><span>${esc(s.L[x[2]])}</span><span class="m">${esc(s.roles[x[3]])}</span>${x[4]?'<span class="tag ik">İkili</span>':''}</div><div class="m">${[x[7],x[8],x[6]?x[6]+' gün':''].filter(Boolean).map(esc).join(' · ')}</div>${x[9]?`<div class="s">Kaynak: ${srcHtml(x[9])}</div>`:''}</li>`).join('')}</ol>`:`<p class="hint">Bu seçimde bu ülke için ${W_} yok.</p>`);
   document.getElementById('cpx').onclick=()=>{country=null;update()};}
-const tl=d3.select('#tl'),TH=130,TM={l:30,r:6,t:8,b:20};let TW=1000;
+let TLX=null;const tl=d3.select('#tl'),TH=130,TM={l:30,r:6,t:8,b:20};let TW=1000;
 window.addEventListener('resize',()=>{clearTimeout(window.__tlr);window.__tlr=setTimeout(drawTL,120)});
 const Y0=1925,Y1=2025,PY={'1925–1938':[1925,1938],'1939–1950':[1939,1950],'1950–1960':[1950,1960],'1960–1980':[1960,1979],'1980–1990':[1980,1989],'1990–2002':[1990,2002],'2002–2025':[2002,2025]};
 function drawTL(){
@@ -280,11 +287,12 @@ function drawTL(){
   const x=d3.scaleBand().domain(d3.range(Y0,Y1+1)).range([TM.l,TW-TM.r]).paddingInner(.18);
   const y=d3.scaleLinear().domain([0,d3.max(all)||1]).nice().range([TH-TM.b,TM.t]);
   tl.selectAll('*').remove();
-  if(period!=='Tümü'){const [a,b]=PY[period];tl.append('rect').attr('class','band').attr('x',x(a)-1).attr('width',x(b)+x.bandwidth()-x(a)+2).attr('y',TM.t).attr('height',TH-TM.b-TM.t);}
+  const SR=drag?[Math.min(drag[0],drag[1]),Math.max(drag[0],drag[1])]:yr?yr:period!=='Tümü'?PY[period]:null; TLX=x;
+  if(SR){const [a,b]=SR;tl.append('rect').attr('class','band').attr('x',x(a)-1).attr('width',x(b)+x.bandwidth()-x(a)+2).attr('y',TM.t).attr('height',TH-TM.b-TM.t);}
   const ax=tl.append('g').attr('class','ax');
   y.ticks(3).forEach(t=>{ax.append('line').attr('x1',TM.l).attr('x2',TW-TM.r).attr('y1',y(t)).attr('y2',y(t)).attr('stroke-dasharray',t?'2 3':null);ax.append('text').attr('x',TM.l-6).attr('y',y(t)+4).attr('text-anchor','end').text(t)});
   d3.range(TW<600?1940:1930,2030,TW<600?20:10).forEach(t=>ax.append('text').attr('x',x(t)+x.bandwidth()/2).attr('y',TH-4).attr('text-anchor','middle').text(t));
-  const inP=k=>{if(period==='Tümü')return true;const [a,b]=PY[period];return k>=a&&k<=b};
+  const inP=k=>{if(!SR)return true;const [a,b]=SR;return k>=a&&k<=b};
   const g=tl.append('g');
   d3.range(Y0,Y1+1).forEach((k,i)=>{
     if(fl&&all[i])g.append('rect').attr('x',x(k)).attr('width',x.bandwidth()).attr('y',y(all[i])).attr('height',y(0)-y(all[i])).attr('fill','var(--nodata)');
@@ -292,6 +300,9 @@ function drawTL(){
     g.append('rect').attr('x',x(k)-1).attr('width',x.bandwidth()+2).attr('y',TM.t).attr('height',TH-TM.b-TM.t).attr('fill','transparent').append('title').text(fl?`${k}: ${sel[i]} (toplam ${all[i]})`:`${k}: ${all[i]}`);
   });
   document.getElementById('tlh').textContent=TX().tl[mode===1?0:1];
+  const R_=drag?[Math.min(drag[0],drag[1]),Math.max(drag[0],drag[1])]:yr;
+  document.getElementById('tlsel').innerHTML=R_?`<span class="on">Seçili ${R_[0]===R_[1]?'yıl':'yıllar'}: <b>${rng(R_[0],R_[1])}</b></span>${drag?'':'<button type="button" id="tlclr">Temizle ✕</button>'}`:'<span>Bir yıla tıklayın ya da sürükleyerek aralık seçin</span>';
+  const cb=document.getElementById('tlclr');if(cb)cb.onclick=()=>{yr=null;update()};
   const nm=leader>=0?S().L[leader]:role>=0?TX().RPL[role]:'';
   document.getElementById('tlk').innerHTML=fl?`<span><i style="background:var(--s4)"></i>${esc(nm)}</span><span><i style="background:var(--nodata)"></i>Toplam</span>`:'';
 }
@@ -323,7 +334,7 @@ function update(){
   if(period!=='Tümü'&&!act.has(PER.indexOf(period))) period='Tümü';
   fillSel(); compute();
   const nb=leader>=0?SMALL:BIG; if(nb!==BINS||!sw.children.length){BINS=nb;drawSw();}
-  document.querySelectorAll('#ctrl .seg').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.p===period);b.disabled=b.dataset.p!=='Tümü'&&!act.has(PER.indexOf(b.dataset.p))});
+  document.querySelectorAll('#ctrl .seg').forEach(b=>{b.setAttribute('aria-pressed',!yr&&b.dataset.p===period);b.disabled=b.dataset.p!=='Tümü'&&!act.has(PER.indexOf(b.dataset.p))});
   document.querySelectorAll('.rseg').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.r===role));
   document.querySelectorAll('.mseg').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.m===mode));
   let who='';
@@ -337,8 +348,8 @@ function update(){
   document.getElementById('legh').textContent=tx.leg[mode===1?0:1];
   document.getElementById('nolab').textContent=mode===1?'Ziyaret yok':'İkili ziyaret yok';
   document.getElementById('thI').classList.toggle('act',mode===0); document.getElementById('thT').classList.toggle('act',mode===1);
-  let pl=period==='Tümü'?tx.start+'–2025':period;
-  if(leader>=0&&period==='Tümü'){const ys=Object.entries(s.LR[leader]).filter(([k])=>role<0||+k===role).flatMap(([,v])=>v);pl=rng(Math.min(...ys),Math.max(...ys));}
+  let pl=yr?rng(yr[0],yr[1]):period==='Tümü'?tx.start+'–2025':period;
+  if(leader>=0&&period==='Tümü'&&!yr){const ys=Object.entries(s.LR[leader]).filter(([k])=>role<0||+k===role).flatMap(([,v])=>v);pl=rng(Math.min(...ys),Math.max(...ys));}
   const subj=leader>=0?s.L[leader]+', ':role>=0?tx.RPL[role]+', ':'';
   let th=tx.top(subj,W_,pl); if(dir==='out') th=th.replace(/^e/,'E'); document.getElementById('toph').textContent=th;
   const mx=rows.length?rows[0][1][mode]:1;
@@ -347,6 +358,17 @@ function update(){
   svg.selectAll('path.c').classed('sel',d=>!!country&&d.iso===country).filter(d=>!!country&&d.iso===country).raise();
   drawRegions(pl); drawTL(); drawPanel(); writeHash();
 }
+
+// year / range selection on the timeline
+(function(){const node=document.getElementById('tl');
+  const kAt=ev=>{if(!TLX)return null;const [px]=d3.pointer(ev,node);const st=TLX.step(),x0=TLX(Y0);let i=Math.floor((px-x0+st*TLX.paddingInner()/2)/st);return Y0+Math.max(0,Math.min(Y1-Y0,i))};
+  node.addEventListener('pointerdown',ev=>{if(ev.button>0)return;const k=kAt(ev);if(k==null)return;drag=[k,k];node.setPointerCapture(ev.pointerId);drawTL()});
+  node.addEventListener('pointermove',ev=>{if(!drag)return;const k=kAt(ev);if(k!==drag[1]){drag[1]=k;drawTL()}});
+  const end=ev=>{if(!drag)return;const a=Math.min(...drag),b=Math.max(...drag);drag=null;
+    if(ev.type==='pointercancel'){drawTL();return}
+    yr=(yr&&yr[0]===a&&yr[1]===b)?null:[a,b];period='Tümü';update()};
+  node.addEventListener('pointerup',end);node.addEventListener('pointercancel',end);
+})();
 </script>
 
 </body>
